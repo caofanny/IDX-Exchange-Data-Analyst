@@ -45,13 +45,48 @@ sold avg:  1,189,603.10
 # ---------------------------------------------------------------
 # Q3: What does the Days on Market distribution look like?
 # ---------------------------------------------------------------
-min_dom = df_sold["DaysOnMarket"].min()
-max_dom = df_sold["DaysOnMarket"].max()
-quartiles = df_sold["DaysOnMarket"].quantile([0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99])
+min_dom_sold = df_sold["DaysOnMarket"].min()
+max_dom_sold = df_sold["DaysOnMarket"].max()
+quartiles_sold = df_sold["DaysOnMarket"].quantile([0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99])
 
-print("Lowest: " + str(min_dom), "Highest: " + str(max_dom))
-print("Quartiles", str(quartiles))
+min_dom_listing = df_listing["DaysOnMarket"].min()
+max_dom_listing = df_listing["DaysOnMarket"].max()
+quartiles_listing = df_listing["DaysOnMarket"].quantile([0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99])
+
+print("Sold Lowest: " + str(min_dom_sold), "Highest: " + str(max_dom_sold))
+print("Sold Quartiles", str(quartiles_sold))
+
 '''
+Sold Lowest: -288 
+Sold Highest: 12430
+Sold Quartiles: 
+0.10      4.0
+0.25      8.0
+0.50     19.0
+0.75     48.0
+0.90     94.0
+0.95    132.0
+0.99    234.0
+'''
+
+print("Listing Lowest: " + str(min_dom_listing), "Highest: " + str(max_dom_listing))
+print("Listing Quartiles", str(quartiles_listing))
+
+'''
+Listing Lowest: -58 
+Highest: 1155
+Listing Quartiles: 
+0.10      1.0
+0.25      5.0
+0.50     11.0
+0.75     24.0
+0.90     50.0
+0.95     78.0
+0.99    134.0
+'''
+
+'''
+Sold
 50% of the listings are on the market for 19 days or less before being sold. 95% are on the market for 132 days.
 There is an outlier of 1155 days and only 1% of the listings get sold after 234 days. The minimum is -288 days, which
 means there might be some invalid data, and the high is 12430 days.
@@ -66,6 +101,7 @@ sold_below = df_sold[df_sold["ClosePrice"] < df_sold["ListPrice"]]
 print("Percentage sold above: " + str((len(sold_above)/total).__round__(2)))
 print("Percentage sold below: " + str((len(sold_below)/total).__round__(2)))
 print()
+
 '''
 Percentage sold above: 0.4
 Percentage sold below: 0.43
@@ -96,6 +132,7 @@ print(counties_sold.head(10))
 print()
 
 '''
+Highest Median Prices (Sold)
 Del Norte        2,485,000.0
 San Mateo        1,700,000.0
 Santa Clara      1,592,000.0
@@ -106,4 +143,23 @@ Marin            1,170,000.0
 Alameda          1,135,000.0
 Alpine           1,100,000.0
 Other County     1,100,000.0
+'''
+
+counties_listing = df_listing.groupby("CountyOrParish")["ClosePrice"].median().sort_values(ascending=False)
+print(counties_listing.head(10))
+print()
+
+'''
+Highest Median Prices (Listing)
+CountyOrParish
+San Mateo        1,750,000.0
+Santa Clara      1,635,000.0
+Marin            1,293,500.0
+San Francisco    1,256,000.0
+Santa Cruz       1.215,000.0
+Orange           1.180,000.0
+Alameda          1,175,000.0
+Los Angeles       925,000.0
+Monterey          915,000.0
+San Diego         903,000.0
 '''

@@ -5,7 +5,7 @@ import pandas as pd
 # Produce a numeric distribution summary (min, max, mean, median, percentiles) for ClosePrice, LivingArea, and DaysOnMarket
 # Save the filtered dataset as a new CSV.
 
-# df_listing = pd.read_csv("All_Months_Listing.csv", low_memory=False)
+df_listing = pd.read_csv("All_Months_Listing.csv", low_memory=False)
 df_sold = pd.read_csv("All_Months_Sold.csv", low_memory=False)
 df_sold_unfiltered = pd.read_csv("All_Months_Sold_Unfiltered.csv", low_memory=False)
 
@@ -78,12 +78,12 @@ df_missing = pd.DataFrame({
     "missing_pct": missing_pct.round(2)
 }).sort_values("missing_pct", ascending=False)
 
-df_missing.to_csv("Missing_Value_Report.csv")
-print("Null Count Summary (Top 10 missing columns by %):")
+# df_missing.to_csv("Missing_Value_Report_Sold.csv")
+print("Null Count Summary Sold (Top 10 missing columns by %):")
 print(df_missing.head(10))
 print()
 '''
-Null Count Summary (Top 10 missing columns by %):
+Null Count Summary Sold (Top 10 missing columns by %):
                               missing_count  missing_pct
 TaxYear                              480484       100.00
 FireplacesTotal                      480484       100.00
@@ -98,12 +98,12 @@ BelowGradeFinishedArea               477574        99.39
 '''
 
 flagged_cols = df_missing[df_missing["missing_pct"] > 90]
-print("Columns with > 90% values missing:")
+print("Sold columns with > 90% values missing:")
 print(flagged_cols)
 print()
 
 '''
-Missing Values Report (90% values missing):
+Missing Values Report Sold (90% values missing):
                               missing_count  missing_pct
 TaxYear                              480484       100.00
 FireplacesTotal                      480484       100.00
@@ -122,6 +122,55 @@ BuildingAreaTotal                    446764        92.98
 CoBuyerAgentFirstName                436277        90.80
 '''
 
+missing_counts = df_listing.isnull().sum()
+missing_pct = missing_counts/len(df_listing) * 100
+df_missing = pd.DataFrame({
+    "missing_count": missing_counts,
+    "missing_pct": missing_pct.round(2)
+}).sort_values("missing_pct", ascending=False)
+
+df_missing.to_csv("Missing_Value_Report_Listing.csv")
+print("Null Count Summary Listing (Top 10 missing columns by %):")
+print(df_missing.head(10))
+print()
+'''
+Null Count Summary Listing (Top 10 missing columns by %):
+                              missing_count  missing_pct
+TaxYear                              630083       100.00
+TaxAnnualAmount                      630083       100.00
+AboveGradeFinishedArea               630083       100.00
+FireplacesTotal                      630083       100.00
+ElementarySchoolDistrict             630083       100.00
+BusinessType                         630083       100.00
+CoveredSpaces                        630083       100.00
+MiddleOrJuniorSchoolDistrict         630083       100.00
+BelowGradeFinishedArea               626372        99.41
+CoBuyerAgentFirstName                612501        97.21
+'''
+
+flagged_cols = df_missing[df_missing["missing_pct"] > 90]
+print("Listing columns with > 90% values missing:")
+print(flagged_cols)
+print()
+
+'''
+Listing columns with > 90% values missing:
+                              missing_count  missing_pct
+TaxYear                              630083       100.00
+TaxAnnualAmount                      630083       100.00
+AboveGradeFinishedArea               630083       100.00
+FireplacesTotal                      630083       100.00
+ElementarySchoolDistrict             630083       100.00
+BusinessType                         630083       100.00
+CoveredSpaces                        630083       100.00
+MiddleOrJuniorSchoolDistrict         630083       100.00
+BelowGradeFinishedArea               626372        99.41
+CoBuyerAgentFirstName                612501        97.21
+BuilderName                          601172        95.41
+LotSizeDimensions                    597257        94.79
+BuildingAreaTotal                    574861        91.24
+'''
+
 # ---------------------------------------------------------------
 # Numeric Distribution Review
 # ---------------------------------------------------------------
@@ -132,12 +181,12 @@ distribution_summary = []
 for field in numeric_distribution_fields:
     row = {
         "field": field,
-        "min": df_sold[field].min(),
-        "max": df_sold[field].max(),
-        "mean": round(df_sold[field].mean(), 2),
-        "median": df_sold[field].median(),
+        "min": df_listing[field].min(),
+        "max": df_listing[field].max(),
+        "mean": round(df_listing[field].mean(), 2),
+        "median": df_listing[field].median(),
     }
-    quantiles = df_sold[field].quantile(percentiles)
+    quantiles = df_listing[field].quantile(percentiles)
     for percentile, value in quantiles.items():
         row[percentile] = value
 
@@ -146,5 +195,5 @@ for field in numeric_distribution_fields:
 df_distribution_summary = pd.DataFrame(distribution_summary)
 print("Distribution Summary: ")
 print(df_distribution_summary)
-df_distribution_summary.to_csv("Numeric_Distribution_Summary.csv", index=False)
+df_distribution_summary.to_csv("Numeric_Distribution_Summary_Listing.csv", index=False)
     
