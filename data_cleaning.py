@@ -37,7 +37,6 @@ cols_to_drop_metadata = [
 duplicates_sold = [col for col in df_sold.columns if col.endswith(".1")]
 duplicates_listing = [col for col in df_listing.columns if col.endswith(".1")]
 
-print(duplicates_sold)
 # Columns that should be dropped
 cols_to_drop_sold = list(set(high_missing_sold + cols_to_drop_metadata + duplicates_sold))
 cols_to_drop_listing = list(set(high_missing_listing + cols_to_drop_metadata + duplicates_listing))
@@ -54,7 +53,15 @@ print("\nListing columns BEFORE dropping: " + str(len(df_listing.columns)))
 print("Listing columns AFTER dropping: " + str(len(df_listing_cleaned.columns)))
 print("Listing columns dropped #: " + str(len(cols_to_drop_listing)))
 
-print(df_sold_cleaned.columns)
+'''
+Sold columns BEFORE dropping: 84
+Sold columns AFTER dropping: 45
+Sold columns dropped #: 39
+
+Listing columns BEFORE dropping: 84
+Listing columns AFTER dropping: 40
+Listing columns dropped #: 48
+'''
 # ---------------------------------------------------------------
 # Ensure numeric fields are properly typed
 # ---------------------------------------------------------------
@@ -97,7 +104,67 @@ df_listing_cleaned["invalid_bedrooms"] = df_listing_cleaned["BedroomsTotal"] < 0
 df_listing_cleaned["invalid_bathrooms"] = df_listing_cleaned["BathroomsTotalInteger"] < 0
 
 invalid_cols = ["invalid_price", "invalid_living_area", "invalid_dom", "invalid_bedrooms", "invalid_bathrooms"]
-df_sold_cleaned["any_invalid"] = df_sold_cleaned[invalid_cols].any(axis=1)
+df_sold_cleaned["any_invalid_numerical_values"] = df_sold_cleaned[invalid_cols].any(axis=1)
+invalid_cols.append("any_invalid_numerical_values")
 
 print("=====================================================================")
 print("Invalid value counts:" + "\n" + str(df_sold_cleaned[invalid_cols].sum()))
+
+'''
+Invalid value counts:
+invalid_price                     1
+invalid_living_area             172
+invalid_dom                      54
+invalid_bedrooms                  0
+invalid_bathrooms                 0
+any_invalid_numerical_values    227
+'''
+
+# ---------------------------------------------------------------
+# Date Consistency Checks
+# ---------------------------------------------------------------
+df_sold_cleaned["listing_after_close_flag"] = df_sold_cleaned["ListingContractDate"] > df_sold_cleaned["CloseDate"]
+df_sold_cleaned["purchase_after_close_flag"] = df_sold_cleaned["PurchaseContractDate"] > df_sold_cleaned["CloseDate"]
+df_sold_cleaned["listing_after_purchase_flag"] = df_sold_cleaned["ListingContractDate"] > df_sold_cleaned["PurchaseContractDate"]
+df_sold_cleaned["negative_timeline_flag"] = df_sold_cleaned[["listing_after_close_flag", "purchase_after_close_flag"]].any(axis=1)
+
+print("=====================================================================")
+print("Listing after purchase date #:" + str((df_sold_cleaned["listing_after_purchase_flag"] == 1).sum()))
+print("Purchase after close date #:" + str((df_sold_cleaned["purchase_after_close_flag"] == 1).sum()))
+print("Listing after close date #:" + str((df_sold_cleaned["listing_after_close_flag"] == 1).sum()))
+print("Flagged rows #: " + str((df_sold_cleaned["negative_timeline_flag"] == 1).sum()))
+
+'''
+Listing after purchase date #:311
+Purchase after close date #:243
+Listing after close date #:74
+Flagged rows #: 313
+'''
+
+# ---------------------------------------------------------------
+# Geographic Data Checks
+# ---------------------------------------------------------------
+df_sold_cleaned["missing_coordinate_flag"] = df_sold_cleaned["Longitude"].isna() | df_sold_cleaned["Latitude"].isna()
+df_sold_cleaned["zero_coordinate_flag"] = (df_sold_cleaned["Longitude"] == 0) | (df_sold_cleaned["Latitude"] == 0)
+df_sold_cleaned["negative_longitude_flag"] = df_sold_cleaned["Longitude"] > 0
+
+# CA Lat: 32° to 42° | CA Long: –114° to –124°
+is_ca = df_sold_cleaned["Latitude"].between(32, 42) & df_sold_cleaned["Longitude"].between(-124, -114)
+is_valid = (~df_sold_cleaned["missing_coordinate_flag"] & 
+            ~df_sold_cleaned["zero_coordinate_flag"] & 
+            ~df_sold_cleaned["negative_longitude_flag"])
+
+df_sold_cleaned["out_of_state_coordinate_flag"] = is_valid & ~is_ca
+
+print("=====================================================================")
+print("Missing coordinate #: " + str((df_sold_cleaned["missing_coordinate_flag"] == 1).sum()))
+print("Zero coordinate #: " + str((df_sold_cleaned["zero_coordinate_flag"] == 1).sum()))
+print("Negative longitude #: " + str((df_sold_cleaned["negative_longitude_flag"] == 1).sum()))
+print("Out of state coordinate #: " + str((df_sold_cleaned["out_of_state_coordinate_flag"] == 1).sum()))
+
+'''
+Missing coordinate #: 4679
+Zero coordinate #: 42
+Negative longitude #: 35
+Out of state coordinate #: 46
+'''
