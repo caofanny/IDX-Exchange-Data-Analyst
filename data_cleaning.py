@@ -3,14 +3,36 @@ import pandas as pd
 # ---------------------------------------------------------------
 # Converting date fields to datetime format 
 # ---------------------------------------------------------------
-df_listing = pd.read_csv("All_Months_Listing.csv", low_memory=False)
-df_sold = pd.read_csv("All_Months_Sold.csv", low_memory=False)
+df_listing = pd.read_csv("Listing_With_Rates.csv", low_memory=False)
+df_sold = pd.read_csv("Sold_With_Rates.csv", low_memory=False)
 
 dateChanges = ["CloseDate", "PurchaseContractDate", "ListingContractDate", "ContractStatusChangeDate"]
 
 for date in dateChanges:
     df_listing[date] = pd.to_datetime(df_listing[date], format="%Y-%m-%d")
     df_sold[date] = pd.to_datetime(df_sold[date], format="%Y-%m-%d", errors="coerce")
+
+# ---------------------------------------------------------------
+# Ensure numeric fields are properly typed
+# ---------------------------------------------------------------
+numeric_fields = ["OriginalListPrice", "ClosePrice", "Latitude", "Longitude", "ListPrice",
+                  "LivingArea", "DaysOnMarket", "ParkingTotal", "LotSizeAcres", "YearBuilt",
+                  "BathroomsTotalInteger", "BedroomsTotal", "Stories", "LotSizeArea",
+                  "MainLevelBedrooms", "GarageSpaces", "AssociationFee", "LotSizeSquareFeet"]
+
+
+for col in numeric_fields:
+    if col in df_sold.columns:
+        df_sold[col] = pd.to_numeric(df_sold[col], errors="coerce")
+    if col in df_listing.columns:
+        df_listing[col] = pd.to_numeric(df_listing[col], errors="coerce")
+
+
+print("=====================================================================")
+print("Sold Datatypes")
+print(df_sold.dtypes)
+print("\nListing Datatypes")
+print(df_listing.dtypes)
 
 # ------------------------------------------------------------------
 # Remove unnecessary, redundant, duplicate and high missing columns
@@ -26,11 +48,9 @@ high_missing_listing = missing_columns_listing[missing_columns_listing["missing_
 cols_to_drop_metadata = [
     'ListingKey', 'ListingKeyNumeric', 'ListingId', 'MlsStatus', 'ListAgentEmail',
     'ListAgentFirstName', 'ListAgentLastName', 'ListAgentFullName', 'ListAgentAOR',
-    'CoListAgentFirstName', 'CoListAgentLastName',
-    'BuyerAgentMlsId', 'BuyerAgentFirstName', 'BuyerAgentLastName',
-    'CoBuyerAgentFirstName', 'BuyerAgentAOR',
-    'ListOfficeName', 'BuyerOfficeName', 'CoListOfficeName', 'BuyerOfficeAOR',
-    'BuyerAgencyCompensation', 'BuyerAgencyCompensationType',
+    'CoListAgentFirstName', 'CoListAgentLastName','BuyerAgentMlsId', 'BuyerAgentFirstName', 
+    'BuyerAgentLastName', 'CoBuyerAgentFirstName', 'BuyerAgentAOR', 'CoListOfficeName', 
+    'BuyerOfficeAOR', 'BuyerAgencyCompensation', 'BuyerAgencyCompensationType',
     'OriginatingSystemName', 'OriginatingSystemSubName', 'StreetNumberNumeric',
 ]
 
@@ -54,39 +74,14 @@ print("Listing columns AFTER dropping: " + str(len(df_listing_cleaned.columns)))
 print("Listing columns dropped #: " + str(len(cols_to_drop_listing)))
 
 '''
-Sold columns BEFORE dropping: 84
-Sold columns AFTER dropping: 45
-Sold columns dropped #: 39
+Sold columns BEFORE dropping: 86
+Sold columns AFTER dropping: 49
+Sold columns dropped #: 37
 
-Listing columns BEFORE dropping: 84
-Listing columns AFTER dropping: 40
-Listing columns dropped #: 48
+Listing columns BEFORE dropping: 86
+Listing columns AFTER dropping: 44
+Listing columns dropped #: 46
 '''
-# ---------------------------------------------------------------
-# Ensure numeric fields are properly typed
-# ---------------------------------------------------------------
-numeric_fields_sold = ["OriginalListPrice", "ClosePrice", "Latitude", "Longitude", "ListPrice", "LivingArea",
-                        "ListPrice", "DaysOnMarket", "AssociationFeeFrequency", "ParkingTotal", "LotSizeAcres", 
-                        "YearBuilt", "BathroomsTotalInteger", "BedroomsTotal", "Stories", "LotSizeAcres", 
-                        "LotSizeArea", "MainLevelBedrooms", "GarageSpaces", "AssociationFee", "LotSizeSquareFeet"]
-
-numeric_fields_listing = ["OriginalListPrice", "ClosePrice", "Latitude", "Longitude", 
-                        "LivingArea", "ListPrice", "DaysOnMarket", "AssociationFeeFrequency",
-                        "ParkingTotal", "LotSizeAcres", "YearBuilt", "BathroomsTotalInteger",
-                        "BedroomsTotal", "Stories", "LotSizeArea", "MainLevelBedrooms", "GarageSpaces",
-                        "AssociationFee", "LotSizeSquareFeet"]
-
-for col in numeric_fields_sold:
-    df_sold[col] = pd.to_numeric(df_sold[col], errors="coerce")
-
-for col in numeric_fields_listing:
-    df_listing[col] = pd.to_numeric(df_listing[col], errors="coerce")
-
-print("=====================================================================")
-print("Sold Datatypes")
-print(df_sold_cleaned.dtypes)
-print("\nListing Datatypes")
-print(df_listing_cleaned.dtypes)
 
 # ---------------------------------------------------------------
 # Flag invalid numeric values
@@ -126,19 +121,20 @@ any_invalid_numerical_values    227
 df_sold_cleaned["listing_after_close_flag"] = df_sold_cleaned["ListingContractDate"] > df_sold_cleaned["CloseDate"]
 df_sold_cleaned["purchase_after_close_flag"] = df_sold_cleaned["PurchaseContractDate"] > df_sold_cleaned["CloseDate"]
 df_sold_cleaned["listing_after_purchase_flag"] = df_sold_cleaned["ListingContractDate"] > df_sold_cleaned["PurchaseContractDate"]
-df_sold_cleaned["negative_timeline_flag"] = df_sold_cleaned[["listing_after_close_flag", "purchase_after_close_flag"]].any(axis=1)
+df_sold_cleaned["negative_timeline_flag"] = df_sold_cleaned[
+    ["listing_after_close_flag", "purchase_after_close_flag", "listing_after_purchase_flag"]].any(axis=1)
 
 print("=====================================================================")
-print("Listing after purchase date #:" + str((df_sold_cleaned["listing_after_purchase_flag"] == 1).sum()))
-print("Purchase after close date #:" + str((df_sold_cleaned["purchase_after_close_flag"] == 1).sum()))
-print("Listing after close date #:" + str((df_sold_cleaned["listing_after_close_flag"] == 1).sum()))
+print("Listing after purchase date #: " + str((df_sold_cleaned["listing_after_purchase_flag"] == 1).sum()))
+print("Purchase after close date #: " + str((df_sold_cleaned["purchase_after_close_flag"] == 1).sum()))
+print("Listing after close date #: " + str((df_sold_cleaned["listing_after_close_flag"] == 1).sum()))
 print("Flagged rows #: " + str((df_sold_cleaned["negative_timeline_flag"] == 1).sum()))
 
 '''
-Listing after purchase date #:311
-Purchase after close date #:243
-Listing after close date #:74
-Flagged rows #: 313
+Listing after purchase date #: 311
+Purchase after close date #: 243
+Listing after close date #: 74
+Flagged rows #: 554
 '''
 
 # ---------------------------------------------------------------
@@ -168,3 +164,6 @@ Zero coordinate #: 42
 Negative longitude #: 35
 Out of state coordinate #: 46
 '''
+
+df_sold_cleaned.to_csv("Sold_Cleaned.csv", index=False, encoding="utf-8")
+df_listing_cleaned.to_csv("Listing_Cleaned.csv", index=False, encoding="utf-8")
