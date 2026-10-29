@@ -31,8 +31,8 @@ listings_with_rates.to_csv("Listing_With_Rates.csv", index=False)
 
 # Step 5 – Validate the merge
 # Check for any unmatched rows (rate should not be null)
-print("Nunber of null rows (sold): " + str(sold_with_rates['rate_30yr_fixed'].isnull().sum()))
-print("Nunber of null rows (listing): " + str(listings_with_rates['rate_30yr_fixed'].isnull().sum()))
+print("Number of null rows (sold): " + str(sold_with_rates['rate_30yr_fixed'].isnull().sum()))
+print("Number of null rows (listing): " + str(listings_with_rates['rate_30yr_fixed'].isnull().sum()))
 '''
 None missing
 '''

@@ -124,6 +124,7 @@ df_sold_cleaned["listing_after_purchase_flag"] = df_sold_cleaned["ListingContrac
 df_sold_cleaned["negative_timeline_flag"] = df_sold_cleaned[
     ["listing_after_close_flag", "purchase_after_close_flag", "listing_after_purchase_flag"]].any(axis=1)
 
+
 print("=====================================================================")
 print("Listing after purchase date #: " + str((df_sold_cleaned["listing_after_purchase_flag"] == 1).sum()))
 print("Purchase after close date #: " + str((df_sold_cleaned["purchase_after_close_flag"] == 1).sum()))
